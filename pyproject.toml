@@ -9,6 +9,7 @@ description = "OpenEnv environment for training AI agents to validate and route 
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+  "openenv-core>=0.2.0",
   "pydantic>=2.0.0",
   "openai>=1.0.0",
   "pyyaml>=6.0",
@@ -16,6 +17,9 @@ dependencies = [
   "uvicorn>=0.24.0",
   "python-dotenv>=1.0.0",
 ]
+
+[project.scripts]
+server = "server.app:main"
 
 [tool.setuptools]
 py-modules = ["app", "inference"]
