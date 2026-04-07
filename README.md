@@ -1,3 +1,13 @@
+---
+title: my-openenv
+emoji: "🤗"
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # API Validator Environment
 
 A real-world OpenEnv environment for training AI agents to validate and route API requests. This environment simulates the task of an intelligent API gateway that must examine incoming requests, validate them against schemas, route them to appropriate backend services, and handle malformed data.
