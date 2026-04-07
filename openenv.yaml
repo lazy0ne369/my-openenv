@@ -1,0 +1,112 @@
+name: api-validator-env
+version: 1.0.0
+description: "OpenEnv environment for training AI agents to validate and route API requests"
+
+author: "Laze"
+license: MIT
+
+tags:
+  - api
+  - validation
+  - routing
+  - real-world
+  - openenv
+
+tasks:
+  - id: easy
+    name: Simple Schema Validation
+    description: Validate user registration requests against a fixed schema
+    difficulty: easy
+
+  - id: medium
+    name: Multi-Endpoint Routing
+    description: Route requests to correct endpoints from multiple options and validate
+    difficulty: medium
+
+  - id: hard
+    name: Malformed Request Recovery
+    description: Attempt to fix or safely reject corrupted/ambiguous requests
+    difficulty: hard
+
+observation_space:
+  type: object
+  properties:
+    request_payload:
+      type: object
+      description: The incoming API request body
+    request_metadata:
+      type: object
+      description: Metadata about the request (timestamp, source, etc.)
+    available_endpoints:
+      type: array
+      items:
+        type: string
+      description: List of available backend endpoints
+    endpoint_schemas:
+      type: object
+      description: Schema definitions for each endpoint
+    step_count:
+      type: integer
+      description: Current step number in the episode
+    previous_feedback:
+      type: string
+      nullable: true
+      description: Feedback from previous action
+
+action_space:
+  type: object
+  properties:
+    action_type:
+      type: string
+      enum: [validate, route, reject, fix]
+      description: Type of action to take
+    target_endpoint:
+      type: string
+      nullable: true
+      description: Endpoint to route to (required for 'route' action)
+    validation_issues:
+      type: array
+      items:
+        type: string
+      nullable: true
+      description: List of validation issues found
+    fix_suggestion:
+      type: object
+      nullable: true
+      description: Suggested fixes for malformed request
+    confidence:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Confidence in this decision
+    reasoning:
+      type: string
+      description: Explanation of why this action was chosen
+
+reward_space:
+  type: object
+  properties:
+    score:
+      type: number
+      minimum: 0.0
+      maximum: 1.0
+      description: Reward value
+    feedback:
+      type: string
+      description: Human-readable feedback
+    breakdown:
+      type: object
+      description: Component breakdown of the reward
+
+api:
+  base_url: "http://0.0.0.0:7860"
+  endpoints:
+    reset: "/reset"
+    step: "/step"
+    state: "/state"
+    tasks: "/tasks"
+
+deployment:
+  platform: huggingface_spaces
+  runtime: docker
+  port: 7860
