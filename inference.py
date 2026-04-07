@@ -21,6 +21,15 @@ DEFAULT_API_BASE_URL = "https://router.huggingface.co/v1"
 DEFAULT_MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
 
 
+def strict_unit_score(score: float, eps: float = 1e-3) -> float:
+    """Clamp score to strict open interval (0, 1)."""
+    if score <= 0.0:
+        return eps
+    if score >= 1.0:
+        return 1.0 - eps
+    return score
+
+
 def get_llm_client() -> OpenAI:
     """Initialize an OpenAI-compatible client for the injected API proxy."""
 
@@ -195,7 +204,7 @@ def run_episode(env: APIValidatorEnv, client: OpenAI, model_name: str, task_id: 
         )
 
     print(f"[END] episode={episode_num} total_reward={total_reward:.3f} steps={step_num}")
-    return total_reward
+    return strict_unit_score(total_reward)
 
 
 def main() -> None:
@@ -227,7 +236,7 @@ def main() -> None:
             total_reward = run_episode(env, client, model_name, task_id, episode_num)
             task_rewards.append(total_reward)
 
-        avg_reward = sum(task_rewards) / len(task_rewards)
+        avg_reward = strict_unit_score(sum(task_rewards) / len(task_rewards))
         results[task_id] = {
             "episodes": num_episodes_per_task,
             "rewards": task_rewards,
@@ -246,7 +255,7 @@ def main() -> None:
             f"(episodes: {task_results['episodes']})"
         )
 
-    overall_avg = sum(r["average_reward"] for r in results.values()) / len(results)
+    overall_avg = strict_unit_score(sum(r["average_reward"] for r in results.values()) / len(results))
     print(f"\nOverall Average: {overall_avg:.3f}")
 
 
