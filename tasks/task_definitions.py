@@ -3,6 +3,15 @@ from src.models import Action
 import random
 
 
+def strict_unit_score(score: float, eps: float = 1e-3) -> float:
+    """Clamp score to strict open interval (0, 1)."""
+    if score <= 0.0:
+        return eps
+    if score >= 1.0:
+        return 1.0 - eps
+    return score
+
+
 class TaskDefinition:
     """Base class for task definitions"""
     
@@ -110,13 +119,13 @@ class EasyTask(TaskDefinition):
             if action.action_type == "route" and action.target_endpoint == ground_truth["correct_endpoint"]:
                 breakdown["correct_action"] = 0.5
                 breakdown["correct_routing"] = 0.5
-                return 1.0, "Perfect! Valid request correctly routed.", breakdown
+                return strict_unit_score(1.0), "Perfect! Valid request correctly routed.", breakdown
             elif action.action_type == "validate":
                 breakdown["correct_action"] = 0.3
-                return 0.3, "Request is valid but not routed yet.", breakdown
+                return strict_unit_score(0.3), "Request is valid but not routed yet.", breakdown
             else:
                 breakdown["incorrect_action"] = 0.0
-                return 0.0, "Valid request should be routed, not rejected/fixed.", breakdown
+                return strict_unit_score(0.0), "Valid request should be routed, not rejected/fixed.", breakdown
         else:
             # Invalid request should be rejected or identified for fixing
             if action.action_type == "reject":
@@ -131,16 +140,16 @@ class EasyTask(TaskDefinition):
                     
                     total = 0.5 + 0.5 * issue_score
                     feedback = f"Correctly rejected. Identified {issues_found}/{total_issues} issues."
-                    return total, feedback, breakdown
+                    return strict_unit_score(total), feedback, breakdown
                 else:
                     breakdown["correct_action"] = 0.5
-                    return 0.5, "Correctly rejected but no issues identified.", breakdown
+                    return strict_unit_score(0.5), "Correctly rejected but no issues identified.", breakdown
             elif action.action_type == "fix":
                 breakdown["attempted_fix"] = 0.3
-                return 0.3, "Good attempt at fixing, but rejection is safer for this task.", breakdown
+                return strict_unit_score(0.3), "Good attempt at fixing, but rejection is safer for this task.", breakdown
             else:
                 breakdown["incorrect_action"] = 0.0
-                return 0.0, "Invalid request should be rejected or fixed.", breakdown
+                return strict_unit_score(0.0), "Invalid request should be rejected or fixed.", breakdown
 class MediumTask(TaskDefinition):
     """
     Medium: Multi-Endpoint Routing
@@ -273,7 +282,7 @@ class MediumTask(TaskDefinition):
         total_score = sum(breakdown.values())
         feedback = f"{routing_feedback} {validation_feedback}"
         
-        return total_score, feedback, breakdown
+        return strict_unit_score(total_score), feedback, breakdown
 class HardTask(TaskDefinition):
     """
     Hard: Malformed Request Recovery
@@ -372,13 +381,13 @@ class HardTask(TaskDefinition):
             # Should reject corrupt requests
             if action.action_type == "reject":
                 breakdown["correct_action"] = 1.0
-                return 1.0, "Correctly rejected unfixable request.", breakdown
+                return strict_unit_score(1.0), "Correctly rejected unfixable request.", breakdown
             elif action.action_type == "fix":
                 breakdown["attempted_impossible_fix"] = 0.2
-                return 0.2, "Attempted fix on unfixable request, but good intent.", breakdown
+                return strict_unit_score(0.2), "Attempted fix on unfixable request, but good intent.", breakdown
             else:
                 breakdown["incorrect_action"] = 0.0
-                return 0.0, "Corrupt request should be rejected.", breakdown
+                return strict_unit_score(0.0), "Corrupt request should be rejected.", breakdown
         
         # Fixable request
         if action.action_type == "fix":
@@ -407,18 +416,18 @@ class HardTask(TaskDefinition):
                 
                 total = sum(breakdown.values())
                 feedback = f"Fix attempted. Quality: {fix_quality:.1%}. Endpoint: {action.target_endpoint}"
-                return total, feedback, breakdown
+                return strict_unit_score(total), feedback, breakdown
             else:
                 feedback = "Fix attempted but no suggestion provided."
-                return 0.4, feedback, breakdown
+                return strict_unit_score(0.4), feedback, breakdown
         
         elif action.action_type == "reject":
             breakdown["safe_choice"] = 0.5
-            return 0.5, "Rejected fixable request - safe but suboptimal.", breakdown
+            return strict_unit_score(0.5), "Rejected fixable request - safe but suboptimal.", breakdown
         
         else:
             breakdown["incorrect_action"] = 0.0
-            return 0.0, "Malformed request should be fixed or rejected.", breakdown
+            return strict_unit_score(0.0), "Malformed request should be fixed or rejected.", breakdown
 
 
 # Task registry
