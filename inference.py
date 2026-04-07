@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Baseline inference script for API Validator Environment.
 
-The model client is configured through Hugging Face environment variables and
-uses the OpenAI Python client against the Hugging Face OpenAI-compatible API.
+The model client is configured through injected submission environment
+variables and uses the OpenAI Python client against the provided API proxy.
 """
 
 from __future__ import annotations
@@ -17,16 +17,16 @@ from openai import OpenAI
 from src.environment import APIValidatorEnv
 from src.models import Action
 
-DEFAULT_API_BASE_URL = "https://api-inference.huggingface.co/v1"
+DEFAULT_API_BASE_URL = "https://router.huggingface.co/v1"
 DEFAULT_MODEL_NAME = "Qwen/Qwen2.5-3B-Instruct"
 
 
 def get_llm_client() -> OpenAI:
-    """Initialize an OpenAI-compatible client for Hugging Face inference."""
+    """Initialize an OpenAI-compatible client for the injected API proxy."""
 
-    api_key = os.getenv("HF_TOKEN")
+    api_key = os.getenv("API_KEY") or os.getenv("HF_TOKEN") or os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise ValueError("HF_TOKEN environment variable must be set")
+        raise ValueError("API_KEY (or HF_TOKEN/OPENAI_API_KEY) environment variable must be set")
 
     return OpenAI(api_key=api_key, base_url=get_api_base_url())
 
@@ -38,7 +38,7 @@ def get_model_name() -> str:
 
 
 def get_api_base_url() -> str:
-    """Get the Hugging Face OpenAI-compatible API base URL."""
+    """Get the injected OpenAI-compatible API base URL."""
 
     return os.getenv("API_BASE_URL", DEFAULT_API_BASE_URL)
 
