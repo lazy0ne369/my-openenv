@@ -1,11 +1,6 @@
-FROM python:3.10-slim
+FROM python:3.10.16-slim-bookworm
 
 WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
