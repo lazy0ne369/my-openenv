@@ -164,6 +164,10 @@ class APIValidatorEnv:
         )
         
         self.episode_reward += score
+        
+        # Ensure episode_reward does not violate strict bounds (0, 1)
+        from tasks.task_definitions import strict_unit_score
+        self.episode_reward = strict_unit_score(self.episode_reward)
         self.previous_feedback = feedback
         
         # Episode ends if:
